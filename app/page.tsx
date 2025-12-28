@@ -1,3 +1,9 @@
+import NativeFetch from "./nativeFetch/NativeFetch";
+
 export default function page() {
-  return <div>hello world</div>;
+  return (
+    <div>
+      <NativeFetch />
+    </div>
+  );
 }

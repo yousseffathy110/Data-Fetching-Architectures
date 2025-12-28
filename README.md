@@ -12,11 +12,16 @@ This project explores various data fetching strategies in modern React/Next.js a
 data-fetching-architectures/
 ├── app/
 │   ├── nativeFetch/
-│   │   ├── fetcher.ts          # Reusable fetch wrapper
-│   │   └── NativeFetch.tsx     # Client-side fetch component
+│   │   ├── fetcher.ts          # Async fetch handler with AbortController
+│   │   └── NativeFetch.tsx     # Client-side fetch component with UI
+│   ├── types/
+│   │   └── types.ts            # Shared TypeScript types
 │   ├── page.tsx                # Main application entry
 │   ├── layout.tsx              # Root layout
 │   └── globals.css             # Global styles
+├── components/
+│   ├── ui/                     # Reusable UI components (Button, Table)
+│   └── CustomTable.tsx         # Data table component
 ├── public/                     # Static assets
 ├── .env.local                  # Environment variables
 └── package.json
@@ -24,11 +29,14 @@ data-fetching-architectures/
 
 ## Features
 
-- **Native Fetch Pattern**: Client-side data fetching with custom fetch wrapper
+- **Native Fetch Pattern**: Client-side data fetching with AbortController support
+- **Request Cancellation**: Proper abort handling for preventing race conditions
+- **Loading States**: UI feedback with loading, error, and success states
 - **Environment-based URLs**: Configurable API endpoints via environment variables
-- **TypeScript**: Full type safety across the application
+- **TypeScript**: Full type safety across the application with shared types
 - **Tailwind CSS**: Utility-first styling with v4
 - **Bun Runtime**: Fast package management and development
+- **Radix UI**: Accessible component primitives
 
 ## Getting Started
 
@@ -69,27 +77,83 @@ bun start
 
 ## Data Fetching Patterns
 
-### Native Fetch
+### Native Fetch with AbortController
 
 Location: `app/nativeFetch/`
 
-A client-side data fetching pattern using the native Fetch API with:
+A client-side data fetching pattern using the native Fetch API with advanced features:
 
-- Custom fetch wrapper for reusability
-- Error handling
-- Environment-based configuration
-- TypeScript type safety
+- **AbortController Integration**: Cancel in-flight requests to prevent race conditions
+- **State Management**: Manages loading, error, and success states via React hooks
+- **Error Handling**: Comprehensive error handling with user-friendly messages
+- **Request Deduplication**: Aborts previous requests before starting new ones
+- **Environment-based Configuration**: Uses `NEXT_PUBLIC_BASE_URL` for API base URL
+- **TypeScript Type Safety**: Fully typed with shared type definitions
 
-**Usage Example:**
+**Implementation:**
 
 ```tsx
-import { fetcher } from "./fetcher";
+// fetcher.ts - Async handler with state management
+import { fetchProps } from "../types/types";
 
-const data = await fetcher({
-  url: "/products",
-  params: { method: "GET" },
-});
+export const handleFetch = async ({
+  abortRef,
+  setStatus,
+  setError,
+  setResult,
+  url,
+}: fetchProps) => {
+  abortRef.current?.abort(); // Cancel previous request
+
+  const abortController = new AbortController();
+  abortRef.current = abortController;
+
+  try {
+    setStatus("loading");
+    const res = await fetch(`${baseUrl}${url}`, {
+      signal: abortController.signal,
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch data");
+
+    const data = await res.json();
+    setResult(data);
+    setStatus("success");
+  } catch (err) {
+    if ((err as Error).name === "AbortError") return;
+    setError((err as Error).message);
+    setStatus("error");
+  }
+};
 ```
+
+**Component Usage:**
+
+```tsx
+// NativeFetch.tsx
+const [result, setResult] = useState<returnedData>([]);
+const [status, setStatus] = useState<Status>("ideal");
+const [error, setError] = useState<string>("");
+const abortRef = useRef<AbortController | null>(null);
+
+const onFetch = () => {
+  handleFetch({
+    abortRef,
+    setStatus,
+    setError,
+    setResult,
+    url: "/products",
+  });
+};
+```
+
+**Key Features:**
+
+- ✅ Prevents memory leaks with proper cleanup
+- ✅ Handles race conditions via request cancellation
+- ✅ Loading states for better UX
+- ✅ Error boundary with retry capability
+- ✅ Fully typed with TypeScript
 
 ## Tech Stack
 

@@ -24,7 +24,7 @@ export default function CustomTable({ result }: { result: object[] }) {
             <TableRow key={item.id}>
               <TableCell className="font-medium">{item.id}</TableCell>
               <TableCell>{item.price}</TableCell>
-              <TableCell>{item.rating.rate}</TableCell>
+              <TableCell>{item.rating?.rate}</TableCell>
               <TableCell className="text-right">{item.title}</TableCell>
             </TableRow>
           );

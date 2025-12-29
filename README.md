@@ -1,10 +1,21 @@
 # Data Fetching Architectures
 
-A Next.js 16 project demonstrating different data fetching patterns and architectures using TypeScript, Bun, and Tailwind CSS.
+A Next.js 15 project showcasing different data fetching patterns and architectures using TypeScript, TanStack Query (React Query), Bun runtime, and Tailwind CSS v4.
 
 ## Project Overview
 
-This project explores various data fetching strategies in modern React/Next.js applications, showcasing best practices and different architectural approaches.
+This project demonstrates modern data fetching strategies in React/Next.js applications, comparing client-side approaches using native Fetch API and TanStack Query for efficient data management and caching.
+
+## Tech Stack
+
+- **Next.js 15.1.1** - React framework with App Router
+- **React 19** - Latest React version with modern features
+- **TypeScript** - Full type safety
+- **TanStack Query v5** - Powerful data synchronization library
+- **Tailwind CSS v4** - Utility-first CSS framework
+- **Bun** - Fast JavaScript runtime and package manager
+- **Radix UI** - Accessible component primitives
+- **Lucide React** - Beautiful icon library
 
 ## Project Structure
 
@@ -12,42 +23,62 @@ This project explores various data fetching strategies in modern React/Next.js a
 data-fetching-architectures/
 ├── app/
 │   ├── nativeFetch/
-│   │   ├── fetcher.ts          # Async fetch handler with AbortController
-│   │   └── NativeFetch.tsx     # Client-side fetch component with UI
+│   │   ├── fetcher.ts          # Native fetch handler with AbortController
+│   │   └── NativeFetch.tsx     # Client component with table view
+│   ├── tanStack-query/
+│   │   ├── fetcher.ts          # TanStack Query fetcher
+│   │   ├── getProducts.ts      # Product fetching function
+│   │   └── ReactQuery.tsx      # React Query implementation with cards
 │   ├── types/
 │   │   └── types.ts            # Shared TypeScript types
-│   ├── page.tsx                # Main application entry
+│   ├── page.tsx                # Main entry with QueryClientProvider
 │   ├── layout.tsx              # Root layout
 │   └── globals.css             # Global styles
 ├── components/
-│   ├── ui/                     # Reusable UI components (Button, Table)
-│   └── CustomTable.tsx         # Data table component
-├── public/                     # Static assets
-├── .env.local                  # Environment variables
-└── package.json
+│   ├── ui/                     # Shadcn UI components (Button, Card, Table)
+│   ├── CustomTable.tsx         # Reusable data table component
+│   └── ProductCard.tsx         # Product card component
+├── lib/
+│   └── utils.ts                # Utility functions (cn, clsx)
+└── public/                     # Static assets
 ```
 
 ## Features
 
-- **Native Fetch Pattern**: Client-side data fetching with AbortController support
-- **Request Cancellation**: Proper abort handling for preventing race conditions
-- **Loading States**: UI feedback with loading, error, and success states
-- **Environment-based URLs**: Configurable API endpoints via environment variables
-- **TypeScript**: Full type safety across the application with shared types
-- **Tailwind CSS**: Utility-first styling with v4
-- **Bun Runtime**: Fast package management and development
-- **Radix UI**: Accessible component primitives
+### Core Features
+
+- **Dual Data Fetching Patterns**: Native Fetch vs TanStack Query comparison
+- **Request Cancellation**: AbortController for preventing race conditions
+- **Automatic Caching**: TanStack Query handles caching and background refetching
+- **Loading States**: Comprehensive UI feedback for all states
+- **Error Handling**: Robust error handling across both patterns
+- **TypeScript**: End-to-end type safety with shared type definitions
+- **DevTools**: React Query DevTools for debugging
+
+### UI Features
+
+- **Multiple View Modes**: Table view (native fetch) and card grid (TanStack Query)
+- **Responsive Design**: Mobile-first responsive layouts
+- **Accessible Components**: Built with Radix UI primitives
+- **Loading Indicators**: Visual feedback with spinners
+- **Interactive Controls**: Fetch, clear, create, and delete actions
 
 ## Getting Started
 
 ### Prerequisites
 
-- Bun installed on your system
-- Node.js 20+ (optional)
+- **Bun** v1.0+ installed on your system
+- Node.js 20+ (optional, if not using Bun)
 
 ### Installation
 
-1. Clone the repository
+1. Clone the repository:
+
+```bash
+git clone <repository-url>
+cd data-fetching-architectures
+```
+
 2. Install dependencies:
 
 ```bash
@@ -60,7 +91,9 @@ bun install
 NEXT_PUBLIC_BASE_URL="https://fakestoreapi.com"
 ```
 
-### Running the Development Server
+### Development
+
+Run the development server:
 
 ```bash
 bun dev
@@ -77,102 +110,163 @@ bun start
 
 ## Data Fetching Patterns
 
-### Native Fetch with AbortController
+### 1. Native Fetch with AbortController
 
-Location: `app/nativeFetch/`
+**Location:** [app/nativeFetch/](app/nativeFetch/)
 
-A client-side data fetching pattern using the native Fetch API with advanced features:
+A traditional client-side data fetching approach using the native Fetch API with manual state management.
 
-- **AbortController Integration**: Cancel in-flight requests to prevent race conditions
-- **State Management**: Manages loading, error, and success states via React hooks
-- **Error Handling**: Comprehensive error handling with user-friendly messages
-- **Request Deduplication**: Aborts previous requests before starting new ones
-- **Environment-based Configuration**: Uses `NEXT_PUBLIC_BASE_URL` for API base URL
-- **TypeScript Type Safety**: Fully typed with shared type definitions
+**Features:**
 
-**Implementation:**
+- Manual state management with React hooks (`useState`)
+- AbortController integration for request cancellation
+- Explicit loading, error, and success states
+- Table view with CustomTable component
+- Clear/Reset functionality
 
-```tsx
-// fetcher.ts - Async handler with state management
-import { fetchProps } from "../types/types";
+**Key Files:**
 
-export const handleFetch = async ({
-  abortRef,
-  setStatus,
-  setError,
-  setResult,
-  url,
-}: fetchProps) => {
-  abortRef.current?.abort(); // Cancel previous request
+- [fetcher.ts](app/nativeFetch/fetcher.ts) - Async handler with state management
+- [NativeFetch.tsx](app/nativeFetch/NativeFetch.tsx) - UI component with table
 
-  const abortController = new AbortController();
-  abortRef.current = abortController;
+**Use Cases:**
 
-  try {
-    setStatus("loading");
-    const res = await fetch(`${baseUrl}${url}`, {
-      signal: abortController.signal,
-    });
+- Simple, one-off requests
+- Full control over fetch logic
+- Learning/understanding fetch mechanics
+- Scenarios where caching is not needed
 
-    if (!res.ok) throw new Error("Failed to fetch data");
+### 2. TanStack Query (React Query)
 
-    const data = await res.json();
-    setResult(data);
-    setStatus("success");
-  } catch (err) {
-    if ((err as Error).name === "AbortError") return;
-    setError((err as Error).message);
-    setStatus("error");
-  }
-};
+**Location:** [app/tanStack-query/](app/tanStack-query/)
+
+Modern server-state management using TanStack Query v5 with automatic caching, background updates, and optimized re-rendering.
+
+**Features:**
+
+- Automatic caching and background refetching
+- Built-in loading and error states via `useQuery`
+- Query invalidation and refetching
+- DevTools for debugging
+- Grid card layout with ProductCard component
+
+**Key Files:**
+
+- [getProducts.ts](app/tanStack-query/getProducts.ts) - Data fetching function
+- [ReactQuery.tsx](app/tanStack-query/ReactQuery.tsx) - Query implementation
+- [page.tsx](app/page.tsx) - QueryClientProvider setup
+
+**Use Cases:**
+
+- Complex applications with multiple data sources
+- Need for automatic caching and synchronization
+- Real-time data requirements
+- Optimistic updates and mutations
+
+## Comparison: Native Fetch vs TanStack Query
+
+| Feature                   | Native Fetch           | TanStack Query          |
+| ------------------------- | ---------------------- | ----------------------- |
+| **Caching**               | Manual implementation  | Automatic               |
+| **Loading States**        | Manual with useState   | Built-in with useQuery  |
+| **Error Handling**        | Manual try/catch       | Built-in error states   |
+| **Request Cancellation**  | Manual AbortController | Automatic               |
+| **Background Refetching** | Not available          | Automatic               |
+| **DevTools**              | Browser DevTools only  | React Query DevTools    |
+| **Code Complexity**       | Higher                 | Lower                   |
+| **Learning Curve**        | Lower                  | Higher                  |
+| **Best For**              | Simple requests        | Complex data management |
+
+## Type Definitions
+
+The project uses shared TypeScript types defined in [app/types/types.ts](app/types/types.ts):
+
+```typescript
+type Status = "ideal" | "loading" | "error" | "success";
+
+type returnedData = {
+  id: number;
+  price: number;
+  rating: {
+    rate: number;
+    count: number;
+  };
+  title: string;
+  image: string;
+  category: string;
+  description: string;
+}[];
 ```
 
-**Component Usage:**
+## Components
 
-```tsx
-// NativeFetch.tsx
-const [result, setResult] = useState<returnedData>([]);
-const [status, setStatus] = useState<Status>("ideal");
-const [error, setError] = useState<string>("");
-const abortRef = useRef<AbortController | null>(null);
+### UI Components (Shadcn UI)
 
-const onFetch = () => {
-  handleFetch({
-    abortRef,
-    setStatus,
-    setError,
-    setResult,
-    url: "/products",
-  });
-};
+- **Button** - [components/ui/button.tsx](components/ui/button.tsx)
+- **Card** - [components/ui/card.tsx](components/ui/card.tsx)
+- **Table** - [components/ui/table.tsx](components/ui/table.tsx)
+
+### Custom Components
+
+- **CustomTable** - [components/CustomTable.tsx](components/CustomTable.tsx) - Data table for displaying products
+- **ProductCard** - [components/ProductCard.tsx](components/ProductCard.tsx) - Card view for individual products
+
+## Environment Variables
+
+Create a `.env.local` file:
+
+```env
+NEXT_PUBLIC_BASE_URL="https://fakestoreapi.com"
 ```
 
-**Key Features:**
+## Scripts
 
-- ✅ Prevents memory leaks with proper cleanup
-- ✅ Handles race conditions via request cancellation
-- ✅ Loading states for better UX
-- ✅ Error boundary with retry capability
-- ✅ Fully typed with TypeScript
+```bash
+# Development
+bun dev
 
-## Tech Stack
+# Production build
+bun run build
 
-- **Framework**: Next.js 16.1.1
-- **Runtime**: Bun
-- **Language**: TypeScript 5
-- **Styling**: Tailwind CSS v4
-- **UI Components**: Radix UI, Lucide Icons
-- **React**: 19.2.3
+# Start production server
+bun start
+```
+
+## Key Learnings
+
+1. **Native Fetch** requires more boilerplate but offers complete control
+2. **TanStack Query** reduces complexity with automatic caching and state management
+3. **AbortController** is essential for preventing race conditions in manual fetch
+4. **Type safety** improves developer experience and reduces bugs
+5. **Shared types** ensure consistency across fetch implementations
+
+## Future Enhancements
+
+- [ ] Add mutations (POST, PUT, DELETE) with TanStack Query
+- [ ] Implement optimistic updates
+- [ ] Add pagination support
+- [ ] Implement search and filtering
+- [ ] Add Server Components with streaming
+- [ ] Implement error boundaries
+- [ ] Add unit and integration tests
+
+## License
+
+This project is open source and available under the MIT License.
+
+## Resources
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [TanStack Query Documentation](https://tanstack.com/query/latest)
+- [Tailwind CSS v4](https://tailwindcss.com)
+- [Bun Documentation](https://bun.sh/docs)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs)
 
 ## Environment Variables
 
 | Variable               | Description                    | Example                    |
 | ---------------------- | ------------------------------ | -------------------------- |
 | `NEXT_PUBLIC_BASE_URL` | Base API URL for data fetching | `https://fakestoreapi.com` |
-
-## Contributing
-
-Feel free to explore different data fetching patterns and contribute new architectural examples.
 
 ## License
 

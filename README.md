@@ -4,7 +4,7 @@ A Next.js 15 project showcasing different data fetching patterns and architectur
 
 ## Project Overview
 
-This project demonstrates modern data fetching strategies in React/Next.js applications, comparing client-side approaches using native Fetch API and TanStack Query for efficient data management and caching.
+This project demonstrates modern data fetching strategies in React/Next.js applications, comparing client-side approaches using native Fetch API and TanStack Query for efficient data management, caching, and mutations.
 
 ## Tech Stack
 
@@ -24,18 +24,22 @@ data-fetching-architectures/
 ├── app/
 │   ├── nativeFetch/
 │   │   ├── fetcher.ts          # Native fetch handler with AbortController
-│   │   └── NativeFetch.tsx     # Client component with table view
-│   ├── tanStack-query/
+│   │   ├── NativeFetch.tsx     # Client component with table view
+│   │   └── page.tsx            # Route page
+│   ├── tanStackQuery/
+│   │   ├── api/
+│   │   │   ├── getProducts.ts  # useQuery hook for fetching products
+│   │   │   └── createProduct.ts # Mutation function for creating products
 │   │   ├── fetcher.ts          # TanStack Query fetcher
-│   │   ├── getProducts.ts      # Product fetching function
-│   │   └── ReactQuery.tsx      # React Query implementation with cards
+│   │   ├── ReactQuery.tsx      # React Query implementation with cards
+│   │   └── page.tsx            # Route page
 │   ├── types/
 │   │   └── types.ts            # Shared TypeScript types
 │   ├── page.tsx                # Main entry with QueryClientProvider
 │   ├── layout.tsx              # Root layout
 │   └── globals.css             # Global styles
 ├── components/
-│   ├── ui/                     # Shadcn UI components (Button, Card, Table)
+│   ├── ui/                     # Shadcn UI components (Button, Card, Table, Input, Label)
 │   ├── CustomTable.tsx         # Reusable data table component
 │   └── ProductCard.tsx         # Product card component
 ├── lib/
@@ -49,7 +53,9 @@ data-fetching-architectures/
 
 - **Dual Data Fetching Patterns**: Native Fetch vs TanStack Query comparison
 - **Request Cancellation**: AbortController for preventing race conditions
-- **Automatic Caching**: TanStack Query handles caching and background refetching
+- **Automatic Caching**: TanStack Query handles caching with configurable staleTime
+- **Mutations**: Create products with `useMutation` and automatic cache invalidation
+- **Manual Query Triggering**: Fetch data on-demand with `enabled` state control
 - **Loading States**: Comprehensive UI feedback for all states
 - **Error Handling**: Robust error handling across both patterns
 - **TypeScript**: End-to-end type safety with shared type definitions
@@ -61,7 +67,8 @@ data-fetching-architectures/
 - **Responsive Design**: Mobile-first responsive layouts
 - **Accessible Components**: Built with Radix UI primitives
 - **Loading Indicators**: Visual feedback with spinners
-- **Interactive Controls**: Fetch, clear, create, and delete actions
+- **Interactive Controls**: Fetch, create, and delete product actions
+- **Form Inputs**: Product creation form with ID, price, and title fields
 
 ## Getting Started
 
@@ -138,44 +145,49 @@ A traditional client-side data fetching approach using the native Fetch API with
 
 ### 2. TanStack Query (React Query)
 
-**Location:** [app/tanStack-query/](app/tanStack-query/)
+**Location:** [app/tanStackQuery/](app/tanStackQuery/)
 
-Modern server-state management using TanStack Query v5 with automatic caching, background updates, and optimized re-rendering.
+Modern server-state management using TanStack Query v5 with automatic caching, background updates, mutations, and optimized re-rendering.
 
 **Features:**
 
-- Automatic caching and background refetching
+- Automatic caching with configurable `staleTime`
+- Manual query triggering via `enabled` state
 - Built-in loading and error states via `useQuery`
-- Query invalidation and refetching
+- Mutations with `useMutation` for creating products
+- Cache invalidation with `queryClient.invalidateQueries()`
 - DevTools for debugging
 - Grid card layout with ProductCard component
 
 **Key Files:**
 
-- [getProducts.ts](app/tanStack-query/getProducts.ts) - Data fetching function
-- [ReactQuery.tsx](app/tanStack-query/ReactQuery.tsx) - Query implementation
+- [api/getProducts.ts](app/tanStackQuery/api/getProducts.ts) - `useQuery` hook wrapper for fetching products
+- [api/createProduct.ts](app/tanStackQuery/api/createProduct.ts) - POST request function for mutations
+- [ReactQuery.tsx](app/tanStackQuery/ReactQuery.tsx) - Main component with query and mutation implementation
 - [page.tsx](app/page.tsx) - QueryClientProvider setup
 
 **Use Cases:**
 
 - Complex applications with multiple data sources
 - Need for automatic caching and synchronization
+- CRUD operations with cache invalidation
 - Real-time data requirements
-- Optimistic updates and mutations
 
 ## Comparison: Native Fetch vs TanStack Query
 
-| Feature                   | Native Fetch           | TanStack Query          |
-| ------------------------- | ---------------------- | ----------------------- |
-| **Caching**               | Manual implementation  | Automatic               |
-| **Loading States**        | Manual with useState   | Built-in with useQuery  |
-| **Error Handling**        | Manual try/catch       | Built-in error states   |
-| **Request Cancellation**  | Manual AbortController | Automatic               |
-| **Background Refetching** | Not available          | Automatic               |
-| **DevTools**              | Browser DevTools only  | React Query DevTools    |
-| **Code Complexity**       | Higher                 | Lower                   |
-| **Learning Curve**        | Lower                  | Higher                  |
-| **Best For**              | Simple requests        | Complex data management |
+| Feature                   | Native Fetch           | TanStack Query             |
+| ------------------------- | ---------------------- | -------------------------- |
+| **Caching**               | Manual implementation  | Automatic with staleTime   |
+| **Loading States**        | Manual with useState   | Built-in with useQuery     |
+| **Error Handling**        | Manual try/catch       | Built-in error states      |
+| **Request Cancellation**  | Manual AbortController | Automatic                  |
+| **Background Refetching** | Not available          | Automatic                  |
+| **Mutations**             | Manual fetch POST      | useMutation with callbacks |
+| **Cache Invalidation**    | Not available          | queryClient.invalidateQueries |
+| **DevTools**              | Browser DevTools only  | React Query DevTools       |
+| **Code Complexity**       | Higher                 | Lower                      |
+| **Learning Curve**        | Lower                  | Higher                     |
+| **Best For**              | Simple requests        | Complex data management    |
 
 ## Type Definitions
 
@@ -184,7 +196,7 @@ The project uses shared TypeScript types defined in [app/types/types.ts](app/typ
 ```typescript
 type Status = "ideal" | "loading" | "error" | "success";
 
-type returnedData = {
+type Product = {
   id: number;
   price: number;
   rating: {
@@ -195,7 +207,51 @@ type returnedData = {
   image: string;
   category: string;
   description: string;
-}[];
+};
+
+type returnedData = Product[];
+
+type CreateProductPayload = {
+  title: string;
+  price: number;
+  id: number;
+};
+```
+
+## TanStack Query Usage Examples
+
+### Fetching Data with Manual Trigger
+
+```typescript
+const [enabled, setEnabled] = useState(false);
+
+const { data, isLoading, error } = GetAllProducts({
+  url: "/products",
+  staleTime: 4000, // 4 seconds
+  enabled, // Only fetch when enabled is true
+});
+
+// Trigger fetch on button click
+<Button onClick={() => setEnabled(true)}>List All Products</Button>
+```
+
+### Creating Data with Mutations
+
+```typescript
+const queryClient = useQueryClient();
+
+const mutation = useMutation({
+  mutationFn: (product: CreateProductPayload) => {
+    return createProduct({ url: "/products", data: product });
+  },
+  onSuccess: () => {
+    // Invalidate and refetch products after successful creation
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+  },
+});
+
+// Trigger mutation
+mutation.mutate({ id: 1, price: 29.99, title: "New Product" });
 ```
 
 ## Components
@@ -205,6 +261,8 @@ type returnedData = {
 - **Button** - [components/ui/button.tsx](components/ui/button.tsx)
 - **Card** - [components/ui/card.tsx](components/ui/card.tsx)
 - **Table** - [components/ui/table.tsx](components/ui/table.tsx)
+- **Input** - [components/ui/input.tsx](components/ui/input.tsx)
+- **Label** - [components/ui/label.tsx](components/ui/label.tsx)
 
 ### Custom Components
 
@@ -212,6 +270,10 @@ type returnedData = {
 - **ProductCard** - [components/ProductCard.tsx](components/ProductCard.tsx) - Card view for individual products
 
 ## Environment Variables
+
+| Variable               | Description                    | Example                    |
+| ---------------------- | ------------------------------ | -------------------------- |
+| `NEXT_PUBLIC_BASE_URL` | Base API URL for data fetching | `https://fakestoreapi.com` |
 
 Create a `.env.local` file:
 
@@ -237,22 +299,23 @@ bun start
 1. **Native Fetch** requires more boilerplate but offers complete control
 2. **TanStack Query** reduces complexity with automatic caching and state management
 3. **AbortController** is essential for preventing race conditions in manual fetch
-4. **Type safety** improves developer experience and reduces bugs
-5. **Shared types** ensure consistency across fetch implementations
+4. **staleTime** controls when data is considered fresh vs stale
+5. **Cache invalidation** via `queryClient.invalidateQueries()` ensures UI stays in sync after mutations
+6. **`enabled` option** allows manual control over when queries execute
+7. **Type safety** improves developer experience and reduces bugs
+8. **Shared types** ensure consistency across fetch implementations
 
 ## Future Enhancements
 
-- [ ] Add mutations (POST, PUT, DELETE) with TanStack Query
+- [x] Add mutations (POST) with TanStack Query
+- [x] Implement cache invalidation after mutations
+- [ ] Add UPDATE and DELETE mutations
 - [ ] Implement optimistic updates
 - [ ] Add pagination support
 - [ ] Implement search and filtering
 - [ ] Add Server Components with streaming
 - [ ] Implement error boundaries
 - [ ] Add unit and integration tests
-
-## License
-
-This project is open source and available under the MIT License.
 
 ## Resources
 
@@ -261,12 +324,6 @@ This project is open source and available under the MIT License.
 - [Tailwind CSS v4](https://tailwindcss.com)
 - [Bun Documentation](https://bun.sh/docs)
 - [TypeScript Documentation](https://www.typescriptlang.org/docs)
-
-## Environment Variables
-
-| Variable               | Description                    | Example                    |
-| ---------------------- | ------------------------------ | -------------------------- |
-| `NEXT_PUBLIC_BASE_URL` | Base API URL for data fetching | `https://fakestoreapi.com` |
 
 ## License
 

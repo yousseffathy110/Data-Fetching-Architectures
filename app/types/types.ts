@@ -1,6 +1,6 @@
 type Status = "ideal" | "loading" | "error" | "success";
 
-type returnedData = {
+type Product = {
   id: number;
   price: number;
   rating: {
@@ -11,7 +11,9 @@ type returnedData = {
   image: string;
   category: string;
   description: string;
-}[];
+};
+
+type returnedData = Product[];
 
 type fetchProps = {
   abortRef: RefObject<AbortController | null>;
@@ -21,4 +23,10 @@ type fetchProps = {
   url: string;
 };
 
-export { Status, returnedData, fetchProps };
+type CreateProductPayload = {
+  title: string;
+  price: number;
+  id: number;
+};
+
+export { Status, returnedData, fetchProps, CreateProductPayload };

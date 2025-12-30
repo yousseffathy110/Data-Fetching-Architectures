@@ -4,6 +4,7 @@ import CustomTable from "@/components/CustomTable";
 import { useState, useRef, useEffect } from "react";
 import { Status, returnedData } from "../types/types";
 import { handleFetch } from "./fetcher";
+import { Loader } from "lucide-react";
 
 export default function NativeFetch() {
   const [result, setResult] = useState<returnedData>([]);
@@ -38,12 +39,15 @@ export default function NativeFetch() {
       <div className="flex gap-5">
         <Button
           onClick={onFetch}
-          loading={status === "loading"}
           className="text-lg"
           size="lg"
           disabled={status === "loading" || result.length > 0}
         >
-          Fetch Data
+          {status === "loading" ? (
+            <Loader className="animate-spin" />
+          ) : (
+            "Fetch Data"
+          )}
         </Button>
         <Button onClick={handleReset} className="text-lg" size="lg">
           Clear

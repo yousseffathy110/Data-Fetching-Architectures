@@ -6,8 +6,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { returnedData } from "@/app/types/types";
 
-export default function CustomTable({ result }: { result: object[] }) {
+export default function CustomTable({ result }: { result: returnedData }) {
   return (
     <Table>
       <TableHeader>

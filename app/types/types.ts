@@ -1,3 +1,5 @@
+import { RefObject, Dispatch, SetStateAction } from "react";
+
 type Status = "ideal" | "loading" | "error" | "success";
 
 type Product = {
@@ -29,4 +31,4 @@ type CreateProductPayload = {
   id: number;
 };
 
-export { Status, returnedData, fetchProps, CreateProductPayload };
+export type { Status, returnedData, fetchProps, CreateProductPayload, Product };

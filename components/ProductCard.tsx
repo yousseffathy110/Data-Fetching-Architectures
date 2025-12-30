@@ -1,10 +1,10 @@
 import { Card } from "./ui/card";
-import { returnedData } from "../types/types";
+import { Product } from "@/app/types/types";
 import { cn } from "@/lib/utils";
 
 const sharedStyle = "text-center text-base cepitalize";
 
-export default function ProductCard({ data }: { data: returnedData }) {
+export default function ProductCard({ data }: { data: Product }) {
   return (
     <Card className="p-3 flex flex-col gap-2 items-center">
       <p className={cn(sharedStyle)}>

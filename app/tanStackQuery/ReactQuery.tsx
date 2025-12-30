@@ -73,9 +73,9 @@ export default function ReactQuery() {
               </Label>
               <Input
                 id="product-id"
-                type="text"
+                type="number"
                 value={id}
-                onChange={(e) => setId(e.target.value)}
+                onChange={(e) => setId(e.target.value === "" ? "" : Number(e.target.value))}
               ></Input>
             </div>
             <div className="flex flex-col gap-1">
